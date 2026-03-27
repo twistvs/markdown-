@@ -132,7 +132,7 @@ int main(){
     //!!p1作为const对象，不能调用普通函数，因为普通函数需要Person* const类型的this!!
 	p1.func();//报错
 	
-    //const成员函数需要的this是const Person* const，
+    //const成员函数需要的this是const Person* const，正好可以
     p1.func2();  //正常输出
 	
 	return 0;
