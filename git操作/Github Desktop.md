@@ -1,0 +1,1 @@
+Github Desktop可以以图形化界面管理**本地的git仓库**并与github产生交互（仅限github）
