@@ -173,6 +173,10 @@ int Person::a = 2;
 int main() {
     //由于静态成员变量不属于某个对象，而是属于类本身，所以调用也是用类名进行调用
 	std::cout << Person::a << std::endl;
+    
+    //静态成员变量虽然不属于对象，但是可以用对象访问，并非只能用类名来访问
+    Person p;
+    std::cout << p.a << std::endl;
 
 	return 0;
 }
