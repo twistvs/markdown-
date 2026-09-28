@@ -176,7 +176,7 @@ int main() {
     
     //静态成员变量虽然不属于对象，但是可以用对象访问，并非只能用类名来访问
     Person p;
-    std::cout << p.a << std::endl;
+    std::cout << p.a << std::endl;     //这里的p.a等价于Person::a，编辑器会自动去找Person类里面的a
 
 	return 0;
 }

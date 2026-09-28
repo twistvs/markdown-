@@ -68,7 +68,28 @@ public:
 
 ------
 
-**const修饰成员函数**会把this从指针常量变成常量指针常量，**只能修改静态成员变量**（因为修改静态成员变量根本不需要用到this，而const仅仅只是修改了this，所以自然也就不影响）
+**const修饰成员函数**会把this从指针常量变成常量指针常量，可以指向所有成员变量，但是**只能修改静态成员变量**（因为修改静态成员变量根本不需要用到this，而const仅仅只是修改了this，所以自然也就不影响）
+
+```c++
+class Person {
+public:
+    const int a = 0;
+    
+    int b = 0;
+    
+    static int c;
+
+    void func() const {
+        cout << a << endl;    //const Person* const可以正常指向a
+        cout << b << endl;    //const Person* const可以正常指向b
+        cout << c << endl;    //c不需要用this来指，直接用Person::c就可以通过类访问到C
+        
+        c++;             //由于只有C不是被this指的，所以只有C可以被修改
+    }
+};
+
+int Person::c = 0;
+```
 
 ```c++
 class Person{
@@ -90,7 +111,7 @@ public:
 
 	void setA(int val) const {
         //由于a不用this指针，所以不受const成员函数的约束
-		a = val;
+		a = val;     //Person::a，并不需要用this指针就能访问a，此时并不是用常量指针指向a，所以a自然可以被修改
 	}
 };
 //静态成员变量的类外定义
