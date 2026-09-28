@@ -239,3 +239,61 @@ int main() {
 ==为什么静态成员函数不能是虚函数==
 
 - 因为静态成员函数的地址是早绑定，而虚函数的地址是晚绑定，互相冲突
+
+------
+
+#### static重复定义
+
+static变量在作用域内不能重复定义，否则会报错
+
+```c++
+static int a = 0;
+static int a = 0;  //报错，在文件作用域内重复定义
+```
+
+```c++
+static int a = 0;
+
+void func() {
+    static int a = 1;    //正确，因为第一个a的是文件作用域，而第二个是函数内作用域
+}
+```
+
+```c++
+void func() {
+    static int a = 1;
+    static int a = 2;      //报错，在函数作用域内重复定义
+}
+```
+
+==同一个定义的多次调用（比如某个函数被多次调用）不会产生重复定义==
+
+```c++
+void func() {
+    static int a = 1;    //虽然被多次调用，但是只有第一次会产生有效的定义
+    a++;
+    cout << a << endl;
+}
+
+int main() {
+
+    func();  //2
+    func();  //3
+    func();  //4
+
+    return 0;
+}
+```
+
+但是类中的定义会导致重复定义，所以static成员变量只能在类外初始化，声明是可以重复的
+
+```c++
+class Person {
+public:
+    static int a;
+    
+};
+
+int Person::a = 1;
+```
+
