@@ -38,9 +38,13 @@ UE5 主要采用 **Client-Server（客户端—服务器）架构**，服务器�
 | Dedicated Server | 独立专用服务器，不负责玩家画面渲染 | 竞技游戏、大型多人游戏 |
 | Client           | 连接远程服务器的游戏客户端         | 联机玩家               |
 
-在 Dedicated Server 模式下，服务器主要负责游戏模拟和网络通信，不需要为本地玩家渲染游戏画面。
+​	在Standalone模式下，本机会同时作为服务端与客户端运行，并且**不支持与其他客户端通信**。客户端会直接获得Authority权限。由于不存在真实的服务端与客户端之间的网络通信，所以无法测试属性复制、网络延迟、RPC 跨网络执行等功能。
 
-Listen Server 则既是服务器又是一个玩家的客户端，所以房主通常具有较低的本地操作延迟，也可能产生一定的房主优势。
+​	Standalone并不会使DS专属逻辑失效，但是如果代码明确判断当前网络模式必须是 `NM_DedicatedServer` 或 `NM_ListenServer`，那么 Standalone 模式不会满足这些条件，相关逻辑就不会执行。
+
+​	Listen Server也是本地同时做客户端和服务端，支持其他客户端的连接，由于本地客户端不需要通过网络通信来和服务端通信，所以相较于其他客户端，拥有一定的延迟优势。虽然 Listen Server **能够测试真实网络同步**，但房主玩家本身运行在服务器上，所以无法完整模拟普通远程客户端的网络延迟、预测和服务器校正行为。
+
+​	在 Dedicated Server 模式下，服务器主要负责游戏模拟和网络通信，不需要为本地玩家渲染游戏画面。
 
 ### 2. 服务器权威（Server Authority）
 
@@ -116,6 +120,24 @@ AEnemy::AEnemy()
 
 如果只是客户端本地生成 Actor，它不会因此自动出现在服务器和其他客户端。
 
+> [!NOTE]
+>
+> ​	AActor定义了成员bReplicates（控制当前Actor是否进行Actor复制）和bReplicateMovement（控制当前Actor是否进行移动复制）
+>
+> ​	但是，这两个值默认都是false，也就是说AActor默认是不开启Actor复制和移动复制的
+
+![image-20261013170738709](../../图片/image-20261013170738709.png)
+
+![image-20261013170705428](../../图片/image-20261013170705428.png)
+
+> [!NOTE]
+>
+> ​	在APawn的构造函数中，将这两个变量都设置成了true（bReplicateMovement是调用AActor的函数来设置bReplicateMovement的值的，因为bReplicates是Protected，可以被子类成员函数访问；而bReplicateMovement是Private，无法被子类成员函数访问，只能通过调接口的方式来访问）
+>
+> ​	ACharacter和ALyraCharacter都直接继承了APawn对这两个值的初始化，所以他们也默认支持Actor复制和移动复制
+
+![image-20261013171348988](../../图片/image-20261013171348988.png)
+
 ### 2. Property Replication（属性复制）
 
 假设服务器和客户端都存在一个角色：
@@ -172,7 +194,11 @@ void AMyCharacter::OnRep_Health()
 
 需要在 Actor 构造函数中启用 `bReplicates`。
 
-这里涉及三个重要概念：
+这里涉及三个重要概念：==Property复制的三要素==
+
+1. 首先，这个Actor得开启Actor复制
+2. 反射说明符Replicated，如果需要回调函数，则用ReplicatedUsing，ReplicatedUsing包含Replicated的功能
+3. 使用宏来注册需要复制的属性
 
 | 机制              | 作用                                   |
 | ----------------- | -------------------------------------- |
