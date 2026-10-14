@@ -194,6 +194,13 @@ Actor 通常关注 `BeginPlay()`、`Tick()`、`EndPlay()`，而 `UUserWidget` �
 | `NativeTick()`          | Widget 需要 Tick 时执行                 |
 | `NativeDestruct()`      | 底层 Slate Widget 相关资源被解除时触发  |
 
+> [!NOTE]
+>
+> ​	五个Native函数是触发的入口，他们在函数内都会调用一个蓝图事件（把Native去掉），如果你需要在这几个时机触发某些逻辑，就可以写在蓝图事件中
+>
+> ​	五个Native函数是虚函数，子类可以直接Super这个UUserWidget里面的原生版本
+
+
 典型过程可以理解为：
 
 ![image-20261013155056071](../../图片/image-20261013155056071.png)
