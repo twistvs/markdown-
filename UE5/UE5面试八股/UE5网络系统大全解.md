@@ -243,6 +243,20 @@ void MulticastPlayEffect();
 
 需要补充：较新的 UE 版本也提供 `Remote` RPC 类型，但面试时先掌握以上三种即可。
 
+> [!NOTE]
+>
+> RPC函数在实现时需要用Implementation
+
+![image-20261014103647242](../../图片/image-20261014103647242.png)
+
+> [!NOTE]
+>
+> 如果在反射说明符中加入WithValidation，则说明这次RPC需要校验，校验通过后才能正常执行Implementation
+
+![image-20261014103755131](../../图片/image-20261014103755131.png)
+
+![image-20261014103807598](../../图片/image-20261014103807598.png)
+
 ### 2. Server RPC
 
 例如玩家按下攻击键：
@@ -271,6 +285,8 @@ void AMyCharacter::ServerAttack_Implementation()
 
 对于攻击敌人的情况，通常应通过自己拥有的 Character 或 PlayerController 提交请求，由服务器寻找并处理目标敌人。
 
+服务器可以调用Server RPC，会直接在服务端本地运行
+
 ### 3. Client RPC
 
 ```c++
@@ -281,6 +297,8 @@ void ClientShowMessage();
 服务器调用这个函数时，通常会将 RPC 发送到该 Actor 对应的拥有者客户端。
 
 例如玩家获得一个私人任务奖励，可以通过自己的 PlayerController 通知对应客户端显示 UI。
+
+客户端可以调用Client RPC，会直接在本地运行
 
 ### 4. NetMulticast RPC
 
@@ -317,6 +335,12 @@ RPC 分为可靠与不可靠两种方式。
 但是不能因为 Reliable 比较可靠，就给每帧发送的高频事件全部添加 Reliable，否则可能造成可靠队列积压。
 
 另外，**不同 Actor 的 RPC 不保证跨 Actor 的执行顺序，多个 RepNotify 之间也没有确定的触发顺序。** 
+
+> [!NOTE]
+>
+> **如果我想要让不同Actor之间也有序怎么办？**
+>
+> ​	最常用的方法是：把需要排序的操作集中到同一个 Actor 的 Reliable RPC 上，再由接收端操作不同 Actor。
 
 ### 6. RPC 和属性复制有什么区别？
 
