@@ -198,7 +198,7 @@ void AMyCharacter::OnRep_Health()
 
 1. 首先，这个Actor得开启Actor复制
 2. 反射说明符Replicated，如果需要回调函数，则用ReplicatedUsing，ReplicatedUsing包含Replicated的功能
-3. 使用宏来注册需要复制的属性
+3. 重写GetLifeTimeReplicatedProps函数，使用宏来注册需要复制的属性
 
 | 机制              | 作用                                   |
 | ----------------- | -------------------------------------- |
