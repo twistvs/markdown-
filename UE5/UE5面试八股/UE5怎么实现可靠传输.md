@@ -103,29 +103,7 @@ UE5 并不是直接把每个 RPC 或属性更新作为一个独立的 UDP 数据
 
 在经典 UE 网络架构中，数据会先被序列化到 Bunch，再由网络连接组合成 Packet。
 
-游戏业务层
-
-RPC、Actor 属性同步
-
-Bunch：网络业务数据单元
-
-Reliable Bunch
-
-需要可靠传输
-
-Unreliable Bunch
-
-允许丢失
-
-Packet：网络传输数据包
-
-Packet Header
-
-Bunch A
-
-Bunch B
-
-UDP 数据报发送到网络
+![image-20261028165908259](../../图片/image-20261028165908259.png)
 
 它们的职责不同：
 
@@ -136,39 +114,13 @@ UDP 数据报发送到网络
 | 主要作用     | 传输、ACK、丢包检测        | 承载 RPC、属性等数据               |
 | 是否原样重传 | 不会                       | Reliable Bunch 可以重传            |
 
-UE5 真正选择是否重传的关键单位是 Reliable Bunch，而不是整个 UDP Packet。 
-
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-
+**UE5 真正选择是否重传的关键单位是 Reliable Bunch，而不是整个 UDP Packet。** 
 
 ### 2. 序列号如何检测丢包？
 
 假设服务器向客户端发送四个 Packet：
 
-\#100
-
-收到
-
-\#101
-
-丢失
-
-\#102
-
-收到
-
-\#103
-
-收到
-
-客户端发现序列号从 100 跳到 102
-
-Packet 101 疑似丢失
-
-根据收到的 Packet 生成确认信息
+![image-20261028165936261](../../图片/image-20261028165936261.png)
 
 接收端通过 Packet 的序列号识别缺失数据。
 
@@ -190,11 +142,7 @@ Packet 102：可靠 Bunch #7
 
 整个流程如下：
 
-服务器
-
-客户端
-
-简化示意：可靠 Bunch 保持原来的序列号，但重传时使用新的 Packet 编号。
+![image-20261028170000118](../../图片/image-20261028170000118.png)
 
 服务器收到确认信息后，会发现 Packet 101 没有被成功确认。
 
@@ -202,15 +150,9 @@ Packet 102：可靠 Bunch #7
 
 注意一个重要细节：
 
-UE5 不会直接原样重传 Packet 101，而是把 Reliable Bunch #6 放进一个新的 Packet，例如 Packet 103。
+**UE5 不会直接原样重传 Packet 101，而是把 Reliable Bunch #6 放进一个新的 Packet，例如 Packet 103。**
 
 这样既保留了 Reliable Bunch 的身份，又保证每个新发送的 Packet 使用新的 Packet ID。
-
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-
 
 ### 4. 发送方为什么必须缓存 Reliable Bunch？
 
@@ -233,17 +175,11 @@ Reliable Bunch #7 → 已 ACK → 移除缓存
 
 这些机制可以在 `Engine/Source/Runtime/Engine/Private/` 下的 `DataChannel.cpp`、`NetConnection.cpp` 等源码中进一步追踪。
 
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-
-
 ### 5. 如何保证数据有序？
 
 假设同一个 Actor 依次发送三个可靠 RPC：
 
-```
+```c++
 ServerEquipWeapon();
 ServerReloadWeapon();
 ServerFireWeapon();
@@ -255,13 +191,7 @@ ServerFireWeapon();
 
 接收方可以暂时缓存后续 Bunch，等缺失的可靠 Bunch 补齐后，再继续按顺序处理。
 
-但这种顺序保证主要针对同一个 Actor/Channel 内的可靠 RPC，并不意味着不同 Actor 的所有 RPC 都具有全局执行顺序。
-
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-
+但这种顺序保证**主要针对同一个 Actor/Channel 内的可靠 RPC**，并不意味着不同 Actor 的所有 RPC 都具有全局执行顺序。
 
 ## 三、UE5 中如何指定可靠传输？
 
@@ -269,9 +199,11 @@ Epic Developer Community
 
 例如玩家请求服务器购买一件装备：
 
-```
+```c++
 UFUNCTION(Server, Reliable)
 void ServerBuyItem(int32 ItemID);
+
+
 void AMyPlayerController::ServerBuyItem_Implementation(
     int32 ItemID)
 {
@@ -290,9 +222,11 @@ void AMyPlayerController::ServerBuyItem_Implementation(
 
 例如让客户端播放一个爆炸特效：
 
-```
+```c++
 UFUNCTION(NetMulticast, Unreliable)
 void MulticastPlayExplosion(FVector Location);
+
+
 void AMyActor::MulticastPlayExplosion_Implementation(
     FVector Location)
 {
@@ -310,22 +244,16 @@ void AMyActor::MulticastPlayExplosion_Implementation(
 
 UE5 的 RPC 默认是 Unreliable，需要显式指定 `Reliable` 才会使用可靠 RPC 机制。
 
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-
-
 ### 3. 那 UPROPERTY(Replicated) 是可靠传输吗？
 
 这里有一个非常容易在面试中答错的问题。
 
-```
+```c++
 UPROPERTY(Replicated)
 float Health = 100.f;
 ```
 
-属性复制和 Reliable RPC 的可靠性机制并不一样。
+**属性复制和 Reliable RPC 的可靠性机制并不一样。**
 
 在经典复制系统中：
 
@@ -350,14 +278,6 @@ float Health = 100.f;
 
 在传统复制路径中，可以查看 `FObjectReplicator::ReceivedNak()`，它就涉及属性丢包后的重新同步处理。
 
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-+1
-
-
-
 因此可以这样区分：
 
 | 机制            | 可靠性语义                               |
@@ -370,32 +290,24 @@ Epic Developer Community
 
 因为 UE5 实现的可靠传输也有代价。
 
-第一，可靠消息需要缓存。 发送方必须保留尚未确认的 Reliable Bunch，占用一定内存和网络发送资源。
+**第一，可靠消息需要缓存。** 发送方必须保留尚未确认的 Reliable Bunch，占用一定内存和网络发送资源。
 
-第二，可靠消息需要重传。 丢包越多，重复传输的开销就越大。
+**第二，可靠消息需要重传。** 丢包越多，重复传输的开销就越大。
 
-第三，Reliable RPC 仍然可能产生队头阻塞。 同一个 Channel 中，如果前面的可靠消息丢失，后续相关消息可能需要等待它恢复。
+**第三，Reliable RPC 仍然可能产生队头阻塞。** 同一个 Channel 中，如果前面的可靠消息丢失，后续相关消息可能需要等待它恢复。
 
 这说明 UE5 使用 UDP，并不是彻底消除了队头阻塞，而是让引擎能够控制可靠性的粒度。
 
 如果在 Tick 中不断调用：
 
-```
+```c++
 UFUNCTION(Server, Reliable)
 void ServerUpdatePosition(FVector Position);
 ```
 
 就可能不断积累可靠消息，在网络不稳定时占满可靠发送缓冲区，严重时甚至导致连接断开。
 
-因此，高频状态数据不应该无脑使用 Reliable RPC。
-
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-+1
-
-
+因此，**高频状态数据不应该无脑使用 Reliable RPC。**
 
 ## 五、UE5 可靠 UDP 和 TCP 到底有什么区别？
 
