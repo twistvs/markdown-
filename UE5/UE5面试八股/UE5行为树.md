@@ -206,8 +206,6 @@ RestartTree(...)
 
 **100 个 AI 可以共享一个 UBehaviorTree 资源，但各自有独立的 UBehaviorTreeComponent 执行状态。** 
 
-
-
 ## 四、UBlackboardData 和 UBlackboardComponent
 
 这两个类的关系，实际上和前面那两个非常相似。
@@ -250,15 +248,9 @@ RestartTree(...)
 
 需要注意，UE5 也支持 Blackboard Key 的 `Instance Synced` 设置，使部分 Key 能在符合条件的黑板实例之间同步，但普通 Key 默认不是所有 AI 共享的。
 
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-
-
 ### 常见黑板操作
 
-```
+```c++
 UBlackboardComponent* BB =
     OwnerComp.GetBlackboardComponent();
 
@@ -311,19 +303,11 @@ UObject
 
 其中 `UBTNode` 主要提供通用的节点功能，包括初始化、节点内存管理等。
 
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-+1
-
-
-
 下面的四类节点是行为树中最重要的部分。
 
 ## 六、UBTCompositeNode：组合节点
 
-组合节点负责控制子节点的执行顺序，以及根据子节点的执行结果决定下一步做什么。
+组合节点负责**控制子节点的执行顺序，以及根据子节点的执行结果决定下一步做什么。**
 
 UE5 有三种主要的组合节点。
 
@@ -337,7 +321,7 @@ UBTComposite_Selector
 
 特点：
 
-从左向右尝试子节点，直到某个子节点成功。如果所有子节点都失败，Selector 才失败。
+**从左向右尝试子节点，直到某个子节点成功。如果所有子节点都失败，Selector 才失败。**
 
 例如：
 
@@ -400,12 +384,6 @@ Selector 和 Sequence 的区别可以记成：
 
 这两个节点是设计行为树时最常用的组合节点。
 
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-
-
 ### 3. Simple Parallel（简单并行）
 
 对应 C++ 类：
@@ -431,12 +409,6 @@ UBTComposite_SimpleParallel
 
 主任务结束后，可以选择立即终止后台分支，或者允许后台分支执行完成。
 
-![img](../../图片/dev.epicgames.png)
-
-Epic Developer Community
-
-
-
 ## 七、UBTTaskNode：任务节点
 
 `UBTTaskNode` 是行为树真正执行动作的节点。
@@ -451,7 +423,7 @@ Epic Developer Community
 
 ### 1. Task 最重要的函数
 
-```
+```c++
 virtual EBTNodeResult::Type ExecuteTask(
     UBehaviorTreeComponent& OwnerComp,
     uint8* NodeMemory
